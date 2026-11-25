@@ -15,6 +15,9 @@ Protótipo estático responsivo de biblioteca PDF. O código não contém PDFs d
 2. Framework Preset: Other. Root Directory: raiz. Sem build e sem instalação; output directory: "." (raiz).
 3. Deploy. Anote a origem HTTPS exata do domínio.
 
+## Catálogo de teste privado
+Em + Adicionar livro, selecione o JSON no campo Importar catálogo de teste. O catálogo deve ter formato mblite-drive-catalog-v1, com uma lista books contendo driveId, title, author, category e desc. Os IDs ficam no navegador; abrir cada arquivo exige autorização do Drive. Não publique catálogos privados no repositório.
+
 ## Google Drive
 1. https://console.cloud.google.com/ — crie um projeto MBLite separado.
 2. APIs & Services > Library > Google Drive API > Enable.
@@ -30,10 +33,10 @@ Documentação: https://developers.google.com/identity/oauth2/web/guides/use-tok
 ## Limitações / próxima etapa
 - Progresso, estante, favoritos e comentários ficam no navegador, não sincronizam.
 - Arquivos locais em IndexedDB; limpeza de dados do site os remove. Metadados em localStorage, visíveis a quem usar o mesmo perfil do navegador. Não use dispositivo público.
-- PDFs do Drive são carregados integralmente em memória ao abrir; arquivos muito grandes podem pesar em celular. Capas são tipográficas nesta alpha, não imagens da primeira página. Um marcador por livro.
+- PDFs do Drive são carregados integralmente em memória ao abrir; arquivos muito grandes podem pesar em celular. Capas são geradas da primeira página no primeiro acesso ao PDF (ou na importação local) e guardadas neste navegador; antes disso há uma capa tipográfica. Um marcador por livro.
 - Conta Google nesta versão é autorização do Drive, não autenticação de comunidade. Para fase 2: Supabase separado com Auth Google, tabelas de membros, livros, progresso, comentários, favoritos; RLS em todas, isolamento por usuário e grupos autorizados; bucket privado para obras autorizadas, URLs temporárias e políticas de Storage. Não exponha service role, secret key, OAuth secret ou tokens.
-- Comentários comunitários, convites, sincronização, capas reais e hospedagem de arquivos no servidor ainda não implementados.
+- Comentários comunitários, convites, sincronização e hospedagem de arquivos no servidor ainda não implementados.
 - Compartilhe apenas materiais próprios, domínio público ou licenciados para distribuição.
 
 ## Roteiro
-0.2: autenticação Google com Supabase e sincronização. 0.3: comunidade, moderação e permissões. 0.4: capas, volumes e capítulos, leitura contínua aprimorada, otimização para PDFs grandes.
+0.2: autenticação Google com Supabase e sincronização. 0.3: comunidade, moderação e permissões. 0.4: volumes e capítulos, leitura contínua aprimorada, otimização para PDFs grandes.
