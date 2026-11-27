@@ -50,7 +50,7 @@ module.exports=async(req,res)=>{
  res.setHeader('Content-Type','application/octet-stream');return res.status(200).send(data);
  }catch{return res.status(502).json({error:'Não foi possível carregar o PDF diretamente do Drive.'})}
  }
- if(!['read','sheets'].includes(action))return res.status(404).json({error:'Operação inválida.'});
+ if(!['read','sheets','original'].includes(action))return res.status(404).json({error:'Operação inválida.'});
  if(action==='sheets'){
  const b=catalog.find(b=>b.id===req.query.id&&b.type==='Ficha');
  let folders;try{folders=JSON.parse(process.env.MBLITE_SHEET_FOLDERS||'{}')}catch{return res.status(503).json({error:'Pasta indisponível.'})}
@@ -61,5 +61,5 @@ module.exports=async(req,res)=>{
  }
  const b=catalog.find(b=>b.id===req.query.id);
  if(!b||!/^[\w-]{10,200}$/.test(b.driveId))return res.status(404).json({error:'Livro não encontrado.'});
- return res.status(200).json({driveId:b.driveId});
+ if(action==='original'){res.setHeader('Location','https://drive.google.com/file/d/'+encodeURIComponent(b.driveId)+'/view');return res.status(302).end()}return res.status(200).json({driveId:b.driveId});
 };
