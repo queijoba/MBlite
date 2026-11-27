@@ -40,7 +40,7 @@ create policy mblite_state_insert on public.mblite_reader_state for insert to au
 create policy mblite_state_update on public.mblite_reader_state for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 create policy mblite_state_delete on public.mblite_reader_state for delete to authenticated using ((select auth.uid()) = user_id);
 create policy mblite_comments_read on public.mblite_comments for select to authenticated using ((select auth.uid()) is not null);
-create policy mblite_comments_insert on public.mblite_comments for insert to authenticated with check ((select auth.uid()) = user_id and author = left(coalesce(nullif((select auth.jwt())->'user_metadata'->>'nickname',''),'Leitor'),40));
+create policy mblite_comments_insert on public.mblite_comments for insert to authenticated with check ((select auth.uid()) = user_id);
 create policy mblite_comments_delete on public.mblite_comments for delete to authenticated using ((select auth.uid()) = user_id);
 create policy mblite_likes_read on public.mblite_comment_likes for select to authenticated using ((select auth.uid()) is not null);
 create policy mblite_likes_insert on public.mblite_comment_likes for insert to authenticated with check ((select auth.uid()) = user_id);
