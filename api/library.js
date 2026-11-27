@@ -30,7 +30,7 @@ module.exports=async(req,res)=>{
   }catch{return res.status(502).json({configured:true,error:'Não foi possível consultar os provedores.'})}
  }
  let catalog;try{catalog=[...JSON.parse(process.env.MBLITE_LINK_CATALOG||'[]'),...JSON.parse(process.env.MBLITE_SDS_CATALOG||'[]'),...JSON.parse(process.env.MBLITE_OP_CATALOG||'[]')]}catch{return res.status(503).json({error:'Catálogo indisponível.'})}
- if(action==='catalog')return res.status(200).json({books:catalog.map(({driveId,...b})=>enrich(b)),collections:Object.fromEntries(Object.entries(collections).filter(([name])=>catalog.some(b=>b.collection===name)))});
+ if(action==='catalog')return res.status(200).json({books:catalog.map(({driveId,...b})=>enrich({...b,keyRequired:b.id.startsWith('op-')})),collections:Object.fromEntries(Object.entries(collections).filter(([name])=>catalog.some(b=>b.collection===name)))});
  if(action==='cover'){
  const b=catalog.find(x=>x.id===req.query.id);
  if(!b||b.readingRestricted||b.type==='Ficha'||!/^[\w-]{10,200}$/.test(b.driveId))return res.status(404).end();
@@ -45,6 +45,7 @@ module.exports=async(req,res)=>{
  }catch{return res.status(502).end()}
  }
  if(action==='chunk'){
+ if(typeof req.query.id==='string'&&req.query.id.startsWith('op-'))return res.status(403).json({error:'Use o leitor protegido para este material.'});
  const b=catalog.find(x=>x.id===req.query.id&&x.type!=='Ficha'),size=b&&readingDetails[b.id]?.size;
  const start=Number(req.query.start),end=Number(req.query.end);
  if(!size||!/^[\w-]{10,200}$/.test(b.driveId))return res.status(404).json({error:'PDF não disponível no leitor.'});
@@ -72,6 +73,7 @@ module.exports=async(req,res)=>{
  return res.status(200).json({folderId});
  }
  const b=catalog.find(b=>b.id===req.query.id);
+ if(b?.id?.startsWith('op-'))return res.status(403).json({error:'Use o leitor protegido para este material; link original não é compartilhado.'});
  if(b?.readingRestricted)return res.status(403).json({error:'Material aguardando versão apropriada para leitura pública.'});
  if(!b||!/^[\w-]{10,200}$/.test(b.driveId))return res.status(404).json({error:'Livro não encontrado.'});
  if(action==='original'){res.setHeader('Location','https://drive.google.com/file/d/'+encodeURIComponent(b.driveId)+'/view');return res.status(302).end()}return res.status(200).json({driveId:b.driveId});
