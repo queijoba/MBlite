@@ -1,11 +1,11 @@
-# MBLite — My Book · 0.1.5 Alpha
+# MBLite — My Book · 0.4v Pre-Alpha
 
-Biblioteca de PDFs hospedados no Google Drive. A coleção inicial Guerra dos Tronos RPG contém seis referências, sem cópia dos arquivos. A configuração privada do catálogo fica na variável de ambiente MBLITE_LINK_CATALOG. Não publicar identificadores de Drive no GitHub público.
+Biblioteca de PDFs hospedados no Google Drive. O catálogo atual reúne Guerra dos Tronos RPG e O Som das Seis RPG, sem cópia dos arquivos originais. A configuração privada do catálogo fica na variável de ambiente MBLITE_LINK_CATALOG. Não publicar identificadores de Drive no GitHub público.
 
 ## Leitura
-O catálogo mostra metadados; a leitura e as pastas de fichas não exigem código de acesso do MBLite. O acesso efetivo depende das permissões do Google Drive. Quem conhece um link compartilhado com qualquer pessoa pode acessá-lo diretamente, diretamente pelo Drive. Não se trata de DRM. Não altere permissões de compartilhamento sem autorização. Compartilhe apenas obras licenciadas para tal.
+O catálogo mostra metadados; a leitura e as pastas de fichas não exigem código de acesso do MBLite. O acesso efetivo depende das permissões do Google Drive. Quem conhece um link compartilhado com qualquer pessoa pode acessá-lo diretamente pelo Drive. Não se trata de DRM. Não altere permissões de compartilhamento sem autorização. Compartilhe apenas obras licenciadas para tal.
 
-O leitor incorporado oferece acesso ao PDF e à interface de download do Drive. Se o iframe não funcionar, abra no Drive. Não há integração de página atual ou exportação de página isolada para os PDFs remotos; essas ferramentas continuam disponíveis para PDFs locais.
+O leitor próprio em PDF oferece sumário, zoom, exportação de página isolada e download quando o carregamento direto funciona. O visualizador integrado do Drive é a alternativa; nele, saltos de página e exportação isolada não estão disponíveis. A interface informa que PDFs podem demorar para carregar. A importação de novos PDFs pessoais foi retirada na versão 0.4v Pre-Alpha; arquivos locais já existentes não são apagados.
 
 ## Contas
 Modo visitante: favoritos, desejos, últimos vistos, comentários de demonstração, respostas, curtidas e spoilers são locais ao navegador. Não são compartilhados. O ranking local é baseado nos comentários locais.
@@ -20,3 +20,9 @@ Catálogo, edição de metadados e capas, organização de coleções, visibilid
 - Navegar, filtrar, abrir visualizador sem código; usar fallback do Drive; testar celular.
 - Favoritos, desejos, últimos vistos, comentários locais, respostas e spoilers.
 - Com banco dedicado, testar contas e políticas RLS antes de convidar leitores.
+
+## Identidade e histórico
+Versão atual: 0.4v Pre-Alpha (numeração definida pelo responsável pelo projeto). Siglas: S6 = O Som das Seis RPG; GDT = Guerra dos Tronos RPG (abreviação editorial do MBLite). O rodapé contém o texto Sobre, créditos a Yuva, histórico das versões efetivamente utilizadas e o link de apoio do Telegram.
+
+## Leitura em imagens — preparação para uma etapa futura
+O leitor atual permanece em PDF. Não existem páginas PNG publicadas nesta versão. Quando os arquivos autorizados forem fornecidos, converter cada PDF em uma pasta de páginas numeradas na ordem física do arquivo, incluindo capa e contracapa. Preservar o PDF original no Drive. O manifesto por obra deverá conter: bookId (ID estável do catálogo), format (png ou webp), pageCount, pages (lista ordenada de referências de imagem e dimensões), toc (títulos e índices físicos correspondentes), e referência ao PDF original para download. Exemplo de organização: `pages/0001.png`, `pages/0002.png`, `manifest.json`. Antes da publicação, verificar quantidade, ordem, legibilidade e permissões de todos os arquivos. O futuro leitor deverá carregar somente páginas próximas, oferecer modo vertical e página única, preservar o sumário e ter fallback PDF. Nenhuma conversão nem integração do leitor por imagens foi executada ainda.
