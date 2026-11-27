@@ -1,12 +1,12 @@
 -- Execute somente no projeto MBLite separado. Não executar no PJ Lite.
 begin;
 create table public.mblite_books (id text primary key check (length(id) between 1 and 80));
-insert into public.mblite_books(id) values ('got-basic'),('got-night'),('got-posses'),('got-porto'),('got-ficha'),('got-ficha-alt');
+insert into public.mblite_books(id) values ('got-basic'),('got-night'),('got-posses'),('got-porto'),('got-ficha'),('got-ficha-alt'),('sds-basic'),('sds-homebrew'),('sds-ficha'),('op-basic'),('op-horror'),('op-casos'),('op-vendeta'),('op-vendeta2'),('op-jujutsu'),('op-hq-01'),('op-hq-02'),('op-hq-03'),('op-hq-04');
 create table public.mblite_reader_state (
  user_id uuid not null references auth.users(id) on delete cascade,
  book_id text not null references public.mblite_books(id) on delete cascade,
  favorite boolean not null default false, wishlist boolean not null default false,
- last_seen timestamptz, primary key(user_id,book_id)
+ last_seen timestamptz, page integer check(page between 1 and 10000), page_count integer check(page_count between 1 and 10000), bookmark integer check(bookmark between 1 and 10000), primary key(user_id,book_id)
 );
 create table public.mblite_comments (
  id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade,
@@ -45,4 +45,27 @@ create policy mblite_comments_delete on public.mblite_comments for delete to aut
 create policy mblite_likes_read on public.mblite_comment_likes for select to authenticated using ((select auth.uid()) is not null);
 create policy mblite_likes_insert on public.mblite_comment_likes for insert to authenticated with check ((select auth.uid()) = user_id);
 create policy mblite_likes_delete on public.mblite_comment_likes for delete to authenticated using ((select auth.uid()) = user_id);
+create table public.mblite_votes (
+ user_id uuid not null references auth.users(id) on delete cascade,
+ book_id text not null references public.mblite_books(id) on delete cascade,
+ vote smallint not null check(vote in(-1,1)), primary key(user_id,book_id)
+);
+create index mblite_votes_book on public.mblite_votes(book_id);
+alter table public.mblite_votes enable row level security;
+revoke all on public.mblite_votes from anon,authenticated;
+grant select,insert,update,delete on public.mblite_votes to authenticated;
+create policy mblite_votes_read on public.mblite_votes for select to authenticated using ((select auth.uid()) is not null);
+create policy mblite_votes_insert on public.mblite_votes for insert to authenticated with check ((select auth.uid())=user_id);
+create policy mblite_votes_update on public.mblite_votes for update to authenticated using ((select auth.uid())=user_id) with check ((select auth.uid())=user_id);
+create policy mblite_votes_delete on public.mblite_votes for delete to authenticated using ((select auth.uid())=user_id);
+create index mblite_reader_book_idx on public.mblite_reader_state(book_id);
+create index mblite_comments_user_idx on public.mblite_comments(user_id);
+create index mblite_likes_user_idx on public.mblite_comment_likes(user_id);
+create view public.mblite_community_stats with (security_invoker=true) as
+select b.id as book_id, coalesce(v.nice,0)::integer as nice,coalesce(v.nher,0)::integer as nher,coalesce(c.comments,0)::integer as comments
+from public.mblite_books b
+left join (select book_id,count(*) filter(where vote=1) nice,count(*) filter(where vote=-1) nher from public.mblite_votes group by book_id) v on v.book_id=b.id
+left join (select book_id,count(*) comments from public.mblite_comments group by book_id) c on c.book_id=b.id;
+revoke all on public.mblite_community_stats from anon,authenticated;
+grant select on public.mblite_community_stats to authenticated;
 commit;
