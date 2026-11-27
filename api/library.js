@@ -20,7 +20,7 @@ module.exports=async(req,res)=>{
  res.setHeader('Cache-Control','private, no-store');res.setHeader('X-Robots-Tag','noindex, nofollow');res.setHeader('X-Content-Type-Options','nosniff');
  if(req.method!=='GET')return res.status(405).json({error:'Método inválido.'});
  const action=req.query?.action;
- if(action==='private-test'){
+ if(action==='private-test'||action==='admin-book-links'){
   res.setHeader('Vary','Authorization');
   const auth=req.headers.authorization,base=process.env.MBLITE_SUPABASE_URL,key=process.env.MBLITE_SUPABASE_PUBLISHABLE_KEY;
   if(typeof auth!=='string'||!/^Bearer [A-Za-z0-9_.-]+$/.test(auth)||auth.length>8192||!base||!key)return res.status(403).json({error:'Acesso administrativo necessário.'});
@@ -28,6 +28,15 @@ module.exports=async(req,res)=>{
    const r=await fetch(base.replace(/\/$/,'')+'/rest/v1/rpc/mblite_key_action',{method:'POST',headers:{apikey:key,Authorization:auth,'Content-Type':'application/json'},body:JSON.stringify({p_action:'state',p_data:{}}),signal:AbortSignal.timeout(5000),cache:'no-store'});
    if(!r.ok)return res.status(403).json({error:'Acesso administrativo necessário.'});
    const state=await r.json();if(state?.ok!==true||state?.admin!==true)return res.status(403).json({error:'Acesso administrativo necessário.'});
+   if(action==='admin-book-links'){
+    const map=JSON.parse(process.env.MBLITE_ADMIN_BOOK_MAP||'{}');
+    const links=Object.create(null);
+    for(const [id,driveId] of Object.entries(map)){
+     if(!/^(?:t20|3det|pf2e|dnd|op)-[a-z0-9-]+$/.test(id)||typeof driveId!=='string'||!/^[A-Za-z0-9_-]{10,200}$/.test(driveId))continue;
+     links[id]={view:'https://drive.google.com/file/d/'+encodeURIComponent(driveId)+'/view',download:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(driveId)};
+    }
+    return res.status(200).json({links});
+   }
    const files=JSON.parse(process.env.MBLITE_PRIVATE_TEST_CATALOG||'[]');
    if(!Array.isArray(files))throw Error('catalog');
    return res.status(200).json({files:files.filter(x=>typeof x.title==='string'&&typeof x.system==='string'&&/^[A-Za-z0-9_-]{10,200}$/.test(x.driveId)).map(x=>({title:x.title,system:x.system,section:x.section||'',url:'https://drive.google.com/file/d/'+encodeURIComponent(x.driveId)+'/view'}))});
