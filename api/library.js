@@ -1,5 +1,3 @@
-const {timingSafeEqual,createHash}=require('node:crypto');
-const digest=x=>createHash('sha256').update(String(x)).digest();
 const collections={'Guerra dos Tronos RPG':{work:'As Crônicas de Gelo e Fogo',originalTitle:'A Song of Ice and Fire Roleplaying (SIFRP)',workAuthor:'George R. R. Martin',designer:'Robert J. Schwalb',publisher:'Green Ronin Publishing',editionPublisher:'Jambô Editora',genres:['Fantasia medieval','Intriga política','Aventura','Guerra'],system:'D6',mechanics:'SIFRP — reserva de dados de seis faces',description:'RPG de fantasia medieval ambientado em Westeros. Os jogadores representam personagens ligados a casas nobres e enfrentam disputas políticas, conflitos armados e desafios de sobrevivência. O sistema inclui criação de casas, intriga, combate e guerra.',sourceNote:'Créditos e sumário do livro básico, edição brasileira de março de 2013.'}};
 const details={
  'got-basic':{authors:['Robert J. Schwalb'],official:true,year:2013,pages:288,description:'Livro básico com regras para criar personagens e casas nobres, resolver testes, conduzir intrigas, combater e administrar guerras em Westeros.'},
@@ -10,7 +8,7 @@ const details={
 function enrich(b){const c=collections[b.collection]||{};const shared={work:c.work,originalTitle:c.originalTitle,workAuthor:c.workAuthor,genres:c.genres||[],system:c.system,mechanics:c.mechanics};return {...shared,...(details[b.id]?{publisher:c.publisher,editionPublisher:c.editionPublisher,...details[b.id]}:{}),...b}}
 
 module.exports=async(req,res)=>{
- res.setHeader('Cache-Control','private, no-store');res.setHeader('X-Robots-Tag','noindex, nofollow');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Vary','Authorization');
+ res.setHeader('Cache-Control','private, no-store');res.setHeader('X-Robots-Tag','noindex, nofollow');res.setHeader('X-Content-Type-Options','nosniff');
  if(req.method!=='GET')return res.status(405).json({error:'Método inválido.'});
  const action=req.query?.action;
  if(action==='config')return res.status(200).json({supabaseUrl:process.env.MBLITE_SUPABASE_URL||null,publishableKey:process.env.MBLITE_SUPABASE_PUBLISHABLE_KEY||null});
@@ -30,9 +28,6 @@ module.exports=async(req,res)=>{
  }catch{return res.status(502).end()}
  }
  if(!['read','sheets'].includes(action))return res.status(404).json({error:'Operação inválida.'});
- const code=process.env.MBLITE_TEST_ACCESS;
- const provided=String(req.headers.authorization||'').replace(/^Bearer /,'');
- if(!code||!provided||!timingSafeEqual(digest(code),digest(provided)))return res.status(401).json({error:'Informe o código de acesso da biblioteca.'});
  if(action==='sheets'){
  const b=catalog.find(b=>b.id===req.query.id&&b.type==='Ficha');
  let folders;try{folders=JSON.parse(process.env.MBLITE_SHEET_FOLDERS||'{}')}catch{return res.status(503).json({error:'Pasta indisponível.'})}
