@@ -19,6 +19,16 @@ module.exports=async(req,res)=>{
  if(req.method!=='GET')return res.status(405).json({error:'Método inválido.'});
  const action=req.query?.action;
  if(action==='config')return res.status(200).json({supabaseUrl:process.env.MBLITE_SUPABASE_URL||null,publishableKey:process.env.MBLITE_SUPABASE_PUBLISHABLE_KEY||null});
+ if(action==='auth-check'){
+  const base=process.env.MBLITE_SUPABASE_URL,key=process.env.MBLITE_SUPABASE_PUBLISHABLE_KEY;
+  if(!base||!key)return res.status(503).json({configured:false});
+  try{
+   const settings=await fetch(base.replace(/\/$/,'')+'/auth/v1/settings',{headers:{apikey:key},signal:AbortSignal.timeout(6000)});
+   if(!settings.ok)return res.status(502).json({configured:true,settingsStatus:settings.status});
+   const j=await settings.json();
+   return res.status(200).json({configured:true,googleEnabled:j.external?.google===true,emailEnabled:j.external?.email===true});
+  }catch{return res.status(502).json({configured:true,error:'Não foi possível consultar os provedores.'})}
+ }
  let catalog;try{catalog=[...JSON.parse(process.env.MBLITE_LINK_CATALOG||'[]'),...JSON.parse(process.env.MBLITE_SDS_CATALOG||'[]'),...JSON.parse(process.env.MBLITE_OP_CATALOG||'[]')]}catch{return res.status(503).json({error:'Catálogo indisponível.'})}
  if(action==='catalog')return res.status(200).json({books:catalog.map(({driveId,...b})=>enrich(b)),collections:Object.fromEntries(Object.entries(collections).filter(([name])=>catalog.some(b=>b.collection===name)))});
  if(action==='cover'){
