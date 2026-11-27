@@ -1,5 +1,7 @@
 const collections={'Guerra dos Tronos RPG':{work:'As Crônicas de Gelo e Fogo',originalTitle:'A Song of Ice and Fire Roleplaying (SIFRP)',workAuthor:'George R. R. Martin',designer:'Robert J. Schwalb',publisher:'Green Ronin Publishing',editionPublisher:'Jambô Editora',genres:['Fantasia medieval','Intriga política','Aventura','Guerra'],system:'D6',mechanics:'SIFRP — reserva de dados de seis faces',description:'RPG de fantasia medieval ambientado em Westeros. Os jogadores representam personagens ligados a casas nobres e enfrentam disputas políticas, conflitos armados e desafios de sobrevivência. O sistema inclui criação de casas, intriga, combate e guerra.',sourceNote:'Créditos e sumário do livro básico, edição brasileira de março de 2013.'}};
 collections['O Som das Seis RPG']={"work":"O Som das Seis","originalTitle":"O Som das Seis","designer":"Ramon Mineiro","genres":["Faroeste","Aventura","Histórico"],"system":"D6","mechanics":"Testes de antecedentes e atributos com dados de seis faces","description":"RPG brasileiro de aventuras no Velho Oeste após a Guerra Civil americana, com personagens que exploram a fronteira e enfrentam conflitos, injustiças e desafios de sobrevivência.","sourceNote":"Créditos, apresentação e sumário do PDF original."};
+collections['Ordem Paranormal RPG']={work:'Ordem Paranormal',abbreviation:'OP',designer:'Rafael Lange (Cellbit)',workAuthor:'Rafael Lange (Cellbit)',publisher:'Jambô Editora',genres:['Horror','Investigação','Sobrenatural'],system:'D20',mechanics:'Testes com dados de vinte faces',description:'RPG brasileiro de investigação e horror sobrenatural.'};
+collections['Ordem Paranormal']={work:'Ordem Paranormal',abbreviation:'OP',workAuthor:'Rafael Lange (Cellbit)',publisher:'Jambô Editora',genres:['Horror','Investigação','Sobrenatural'],description:'Adaptações em quadrinhos de histórias do universo de Ordem Paranormal.'};
 const details={
  'sds-basic':{authors:['Ramon Mineiro'],official:true,year:2022,description:'RPG de aventuras no Velho Oeste, com regras de criação de personagens, antecedentes, habilidades, cartas de sina, combate, duelos e exploração da fronteira. Inclui a aventura O Trem das Onze.'},
  'sds-homebrew':{authors:['Marcos','Tadeu'],official:false,publisher:'Publicação independente (fã)',description:'Material não oficial que acrescenta habilidades, profissões, itens e mecânicas opcionais para ampliar as possibilidades de personagens e campanhas.'},
@@ -17,11 +19,11 @@ module.exports=async(req,res)=>{
  if(req.method!=='GET')return res.status(405).json({error:'Método inválido.'});
  const action=req.query?.action;
  if(action==='config')return res.status(200).json({supabaseUrl:process.env.MBLITE_SUPABASE_URL||null,publishableKey:process.env.MBLITE_SUPABASE_PUBLISHABLE_KEY||null});
- let catalog;try{catalog=[...JSON.parse(process.env.MBLITE_LINK_CATALOG||'[]'),...JSON.parse(process.env.MBLITE_SDS_CATALOG||'[]')]}catch{return res.status(503).json({error:'Catálogo indisponível.'})}
+ let catalog;try{catalog=[...JSON.parse(process.env.MBLITE_LINK_CATALOG||'[]'),...JSON.parse(process.env.MBLITE_SDS_CATALOG||'[]'),...JSON.parse(process.env.MBLITE_OP_CATALOG||'[]')]}catch{return res.status(503).json({error:'Catálogo indisponível.'})}
  if(action==='catalog')return res.status(200).json({books:catalog.map(({driveId,...b})=>enrich(b)),collections:Object.fromEntries(Object.entries(collections).filter(([name])=>catalog.some(b=>b.collection===name)))});
  if(action==='cover'){
  const b=catalog.find(x=>x.id===req.query.id);
- if(!b||b.type==='Ficha'||!/^[\w-]{10,200}$/.test(b.driveId))return res.status(404).end();
+ if(!b||b.readingRestricted||b.type==='Ficha'||!/^[\w-]{10,200}$/.test(b.driveId))return res.status(404).end();
  try{
  const u='https://drive.google.com/thumbnail?id='+encodeURIComponent(b.driveId)+'&sz=w640';
  const r=await fetch(u,{signal:AbortSignal.timeout(8000),redirect:'follow',headers:{Accept:'image/jpeg,image/png,image/webp'}});
@@ -60,6 +62,7 @@ module.exports=async(req,res)=>{
  return res.status(200).json({folderId});
  }
  const b=catalog.find(b=>b.id===req.query.id);
+ if(b?.readingRestricted)return res.status(403).json({error:'Material aguardando versão apropriada para leitura pública.'});
  if(!b||!/^[\w-]{10,200}$/.test(b.driveId))return res.status(404).json({error:'Livro não encontrado.'});
  if(action==='original'){res.setHeader('Location','https://drive.google.com/file/d/'+encodeURIComponent(b.driveId)+'/view');return res.status(302).end()}return res.status(200).json({driveId:b.driveId});
 };
