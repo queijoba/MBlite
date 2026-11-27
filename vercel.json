@@ -1,0 +1,60 @@
+{
+  "rewrites": [
+    {
+      "source": "/yconta",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/yconta/:tab",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/obra/:id",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/colecao",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/biblioteca",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/favoritos",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/desejos",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/lendo",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/mais-comentados",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/mais-nice",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/rpg",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/hq",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/manga",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/outros",
+      "destination": "/index.html"
+    }
+  ]
+}
