@@ -55,6 +55,10 @@
     {
       "source": "/outros",
       "destination": "/index.html"
+    },
+    {
+      "source": "/fichas",
+      "destination": "/index.html"
     }
   ]
 }
