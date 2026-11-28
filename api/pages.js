@@ -18,7 +18,7 @@ const BLOCK=1048576,RECORD=BLOCK+16,PART=48*RECORD;
 const privateChunks=new Map();let privateChunkBytes=0;
 async function decryptedChunk(book,p,index){let cacheKey=book+':'+index,old=privateChunks.get(cacheKey);if(old){privateChunks.delete(cacheKey);privateChunks.set(cacheKey,old);return old}
  const secret=process.env.MBLITE_PRIVATE_IMAGE_KEY;if(!/^[a-f0-9]{64}$/i.test(secret||'')||!(/^[a-f0-9]{16}$/i.test(p.nonce||'')))throw Error('private key');
- let plainSize=Math.min(BLOCK,p.size-index*BLOCK);if(plainSize<1)throw Error('private range');let offset=index*RECORD,part=p.parts[Math.floor(offset/PART)],local=offset%PART;
+ let plainSize=Math.min(BLOCK,p.size-index*BLOCK);if(plainSize<1)throw Error('private range');let offset=index*RECORD,part=p.parts.length===1?p.parts[0]:p.parts[Math.floor(offset/PART)],local=p.parts.length===1?offset:offset%PART;
  if(!part||typeof part.id!=='string'||!/^[A-Za-z0-9_-]{10,200}$/.test(part.id)||local+plainSize+16>part.size)throw Error('private part');
  let encrypted=await driveRange(part,local,local+plainSize+15),ix=Buffer.alloc(4);ix.writeUInt32BE(index);let d=crypto.createDecipheriv('aes-256-gcm',Buffer.from(secret,'hex'),Buffer.concat([Buffer.from(p.nonce,'hex'),ix]));d.setAAD(Buffer.concat([Buffer.from(book),ix]));d.setAuthTag(encrypted.subarray(-16));let data=Buffer.concat([d.update(encrypted.subarray(0,-16)),d.final()]);if(data.length!==plainSize)throw Error('private length');
  if(!privateChunks.has(cacheKey)){privateChunks.set(cacheKey,data);privateChunkBytes+=data.length;while(privateChunkBytes>12*BLOCK){let k=privateChunks.keys().next().value,v=privateChunks.get(k);privateChunks.delete(k);privateChunkBytes-=v.length}}return data}
