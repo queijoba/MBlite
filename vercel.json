@@ -59,6 +59,14 @@
     {
       "source": "/fichas",
       "destination": "/index.html"
+    },
+    {
+      "source": "/forum",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/tier-list",
+      "destination": "/index.html"
     }
   ]
 }
