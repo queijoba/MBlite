@@ -20,7 +20,7 @@ module.exports=async(req,res)=>{
  res.setHeader('Cache-Control','private, no-store');res.setHeader('X-Robots-Tag','noindex, nofollow');res.setHeader('X-Content-Type-Options','nosniff');
  if(req.method!=='GET')return res.status(405).json({error:'Método inválido.'});
  const action=req.query?.action;
- if(action==='private-test'||action==='admin-book-links'){
+ if(action==='private-test'||action==='admin-book-links'||action==='admin-pdf-meta'||action==='admin-pdf-range'){
   res.setHeader('Vary','Authorization');
   const auth=req.headers.authorization,base=process.env.MBLITE_SUPABASE_URL,key=process.env.MBLITE_SUPABASE_PUBLISHABLE_KEY;
   if(typeof auth!=='string'||!/^Bearer [A-Za-z0-9_.-]+$/.test(auth)||auth.length>8192||!base||!key)return res.status(403).json({error:'Acesso administrativo necessário.'});
@@ -28,6 +28,36 @@ module.exports=async(req,res)=>{
    const r=await fetch(base.replace(/\/$/,'')+'/rest/v1/rpc/mblite_key_action',{method:'POST',headers:{apikey:key,Authorization:auth,'Content-Type':'application/json'},body:JSON.stringify({p_action:'state',p_data:{}}),signal:AbortSignal.timeout(5000),cache:'no-store'});
    if(!r.ok)return res.status(403).json({error:'Acesso administrativo necessário.'});
    const state=await r.json();if(state?.ok!==true||state?.admin!==true)return res.status(403).json({error:'Acesso administrativo necessário.'});
+   if(action==='admin-pdf-meta'||action==='admin-pdf-range'){
+    const map=JSON.parse(process.env.MBLITE_ADMIN_BOOK_MAP||'{}'),id=req.query.id;
+    const driveId=typeof id==='string'&&Object.hasOwn(map,id)?map[id]:null;
+    if(typeof driveId!=='string'||!/^[A-Za-z0-9_-]{10,200}$/.test(driveId))return res.status(404).json({error:'PDF pessoal não cadastrado.'});
+    const meta=action==='admin-pdf-meta',start=meta?0:Number(req.query.start),end=meta?65535:Number(req.query.end);
+    if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>=512*1024*1024||end-start+1>2097152)return res.status(416).json({error:'Intervalo inválido.'});
+    const u='https://drive.usercontent.google.com/download?id='+encodeURIComponent(driveId)+'&export=download&confirm=t';
+    const upstream=await fetch(u,{headers:{Range:'bytes='+start+'-'+end,'Accept-Encoding':'identity'},signal:AbortSignal.timeout(20000),redirect:'follow'});
+    const type=(upstream.headers.get('content-type')||'').toLowerCase();
+    if(!upstream.ok||(!type.includes('pdf')&&!type.includes('octet-stream'))){await upstream.body?.cancel().catch(()=>{});return res.status(502).json({error:'Drive não disponibilizou o PDF diretamente. Importe sua cópia neste aparelho.'})}
+    let total,actualEnd,data;
+    if(upstream.status===206){
+      const m=/^bytes (\d+)-(\d+)\/(\d+)$/.exec(upstream.headers.get('content-range')||'');
+      if(!m||Number(m[1])!==start){await upstream.body?.cancel().catch(()=>{});throw Error('range')}
+      total=Number(m[3]);actualEnd=Number(m[2]);
+      if(!Number.isSafeInteger(total)||total<5||total>512*1024*1024||actualEnd!==Math.min(end,total-1)||actualEnd<start){await upstream.body?.cancel().catch(()=>{});throw Error('range')}
+      data=Buffer.from(await upstream.arrayBuffer());
+      if(data.length!==actualEnd-start+1)throw Error('bytes');
+    }else if(upstream.status===200){
+      total=Number(upstream.headers.get('content-length'));
+      if(!Number.isSafeInteger(total)||total<5||total>3*1024*1024||start>=total){await upstream.body?.cancel().catch(()=>{});return res.status(502).json({error:'Drive não aceitou leitura por partes. Importe sua cópia.'})}
+      const all=Buffer.from(await upstream.arrayBuffer());
+      if(all.length!==total||all.subarray(0,5).toString()!=='%PDF-')throw Error('pdf');
+      data=all.subarray(start,Math.min(end+1,total));
+    }else throw Error('status');
+    if(start===0&&data.subarray(0,5).toString()!=='%PDF-')throw Error('pdf');
+    if(meta)return res.status(200).json({size:total});
+    res.setHeader('Content-Type','application/octet-stream');
+    return res.status(200).send(data);
+   }
    if(action==='admin-book-links'){
     const map=JSON.parse(process.env.MBLITE_ADMIN_BOOK_MAP||'{}');
     const links=Object.create(null);
