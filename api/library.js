@@ -139,3 +139,4 @@ module.exports=async(req,res)=>{
  if(!b||!/^[\w-]{10,200}$/.test(b.driveId))return res.status(404).json({error:'Livro não encontrado.'});
  if(action==='original'){res.setHeader('Location','https://drive.google.com/file/d/'+encodeURIComponent(b.driveId)+'/view');return res.status(302).end()}return res.status(200).json({driveId:b.driveId});
 };
+// Preview catalog uses the same configured collection metadata as production.
