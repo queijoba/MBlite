@@ -1,0 +1,13 @@
+begin;
+create table public.mblite_early_access(id boolean primary key default true check(id),enabled boolean not null default true,signup_until date not null default '2027-01-20');
+insert into public.mblite_early_access default values;
+alter table public.mblite_early_access enable row level security;
+revoke all on public.mblite_early_access from public,anon,authenticated;
+grant select on public.mblite_early_access to authenticated;
+grant update(enabled) on public.mblite_early_access to authenticated;
+create policy early_read on public.mblite_early_access for select to authenticated using(true);
+create policy early_admin on public.mblite_early_access for update to authenticated using(mblite_access_private.community_admin()) with check(mblite_access_private.community_admin());
+create function public.mblite_rank(p_week boolean default false) returns table(book_id text,nice bigint,nher bigint) language sql stable security invoker set search_path='' as $$ select v.book_id,count(*) filter(where v.vote=1),count(*) filter(where v.vote=-1) from public.mblite_votes v where v.voted_at >= (((now() at time zone 'America/Bahia')::date - case when p_week then 6 else 0 end)::timestamp at time zone 'America/Bahia') group by v.book_id $$;
+revoke all on function public.mblite_rank(boolean) from public,anon,authenticated;
+grant execute on function public.mblite_rank(boolean) to authenticated;
+commit;
